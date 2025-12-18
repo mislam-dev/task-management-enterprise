@@ -12,7 +12,7 @@
   },
   "scripts": {
     "dev": "tsc -watch",
-    "build": "tsc",
+    "build": "prisma generate && tsc",
     "test": "jest",
     "clear": "rimref dist",
     "check:types": "tsc --noEmit",

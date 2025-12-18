@@ -117,7 +117,7 @@ export class PrismaTodoRepository implements TodoRepository {
     return {
       id: todo.id,
       title: todo.title,
-      completed: todo.completed,
+      completed: !!todo.completed,
       description: todo.description,
       createdAt: todo.createdAt,
     };

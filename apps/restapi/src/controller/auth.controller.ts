@@ -46,11 +46,11 @@ export const register = async (req: Request, res: Response) => {
   }
   const data = parsedData.data;
 
-  const createTodoUseCase = new CreateNewUserUseCase(
+  const createNewUserUseCase = new CreateNewUserUseCase(
     getUserRepository(),
     hashPassword
   );
-  await createTodoUseCase.execute(data);
+  await createNewUserUseCase.execute(data);
 
   res.status(202).json({ message: "User created successfully" });
   return;
