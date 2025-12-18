@@ -25,7 +25,31 @@ Task Enterprise is a robust task management system with user authentication, rol
 ## Architecture
 
 The project is organized into multiple packages and apps, each with its own purpose.
-![Project Architecture](/docs/images/architecture.png "Todo Enterprise Architecture")
+
+```mermaid
+graph TD
+    subgraph Client_Layer [Client Side]
+        A[Frontend App]
+    end
+
+    subgraph Server_Layer [Backend Services]
+        B[ Controller]
+        C[Business Logic]
+        D[Prisma Client]
+    end
+
+    subgraph Data_Layer [Database]
+        E[(PostgreSQL)]
+        F[(Redis Cache)]
+    end
+
+    A -->|HTTP/REST| B
+    B --> C
+    C --> D
+    D --> E
+    C -.-> F
+
+```
 
 ## Apps
 
@@ -38,31 +62,151 @@ The project is organized into multiple packages and apps, each with its own purp
 - `packages/database`: Database implementations (Prisma)
 - `packages/errors`: Custom error handling utilities
 - `packages/eslint-config`: Shared ESLint configurations
-- `packages/permission-manager`: Role and Attribute-based (RBAC & ABAC) access control system 
+- `packages/permission-manager`: Role and Attribute-based (RBAC & ABAC) access control system
 - `packages/schemas`: Zod validation schemas
 - `packages/shared`: Shared utilities
 - `packages/typescript-config`: Shared TypeScript configurations
 
-### `packages/core`
+### `Shared Interfaces:`
 
-Interfaces:
-![Core Interfaces](/docs/images/interfaces.png "Core Interfaces")
+```mermaid
+classDiagram
+    class JsonWebToken {
+        <<interface>>
+        sign() string
+        verify() boolean
+    }
 
-Repositories:
-![Core Repositories](/docs/images/repository_interface.png "Core Repositories")
+    class HashPassword {
+        <<interface>>
+        hash() string
+        compare() boolean
+    }
+   class DateFormatter {
+        <<interface>>
+        xAgo() string
+        xRemain() string
+        xDate() string
+        difference() string
+    }
+    class Logger {
+        <<interface>>
+        log() void
+        warn() void
+        error() void
+        debug() void
+    }
+```
 
-Use Cases:
-![Core Use Cases](/docs/images/use_cases_list.png "Core Use Cases")
+### `Repositories:`
 
-### `packages/database`
+```mermaid
+classDiagram
+    class UserRepository {
+        <<interface>>
+        findAll()
+        findById()
+        findByEmail()
+        findByEmailWithPassword()
+        update()
+        remove()
+    }
 
-Database Design:
-![Database Design](/docs/images/database_design.png "Database Design")
+    class TodoRepository {
+        <<interface>>
+        findAll()
+        findById()
+        findByEmail()
+        update()
+        remove()
+    }
+```
 
-### `packages/permission-manger`
+### `Use Cases:`
 
-Permission State:
-![Permission State](/docs/images/permission_flow.png "Permission State")
+<!-- need to use a table -->
+
+#### User UseCases:
+
+| Use Case           | Description                                                              |
+| :----------------- | :----------------------------------------------------------------------- |
+| **Registration**   | Allows new users to sign up and create an account in the system.         |
+| **Login**          | Validates user credentials and provides access via session or token.     |
+| **AddUser**        | An administrative action to manually create and invite new users.        |
+| **ViewUser**       | Retrieves a list of multiple users, usually for administrative purposes. |
+| **ViewSingleUser** | Fetches the specific profile details and roles for a single user.        |
+| **UpdateUser**     | Updates existing user information like name, email, or permissions.      |
+| **DeleteUser**     | Removes a user account or marks it as inactive in the database.          |
+
+#### Todo Use Cases
+
+| Use Case       | Description                                                     |
+| :------------- | :-------------------------------------------------------------- |
+| **CreateTodo** | Creates a new task entry assigned to the authenticated user.    |
+| **ViewTodos**  | Lists all tasks belonging to a user or a specific filtered set. |
+| **UpdateTodo** | Modifies task details such as title, description, or status.    |
+| **DeleteTodo** | Removes a specific task entry permanently from the list.        |
+
+### `Entity Relationship Diagram`:
+
+```mermaid
+erDiagram
+    Users ||--o{ Todo : "has"
+    Users ||--|| Role : "assigned"
+
+    Users {
+        UUID id PK
+        string email
+        string email_unique
+        string name
+        Role role
+        datetime createdAt
+        datetime updatedAt
+        datetime deletedAt
+    }
+
+    Todo {
+        UUID id PK
+        string title
+        string description
+        boolean completed
+        UUID userId FK
+        datetime createdAt
+        datetime updatedAt
+        datetime deletedAt
+    }
+
+    Role {
+        string user
+        string admin
+        string super_admin
+    }
+
+```
+
+### `Permission Flow:`
+
+```mermaid
+graph LR
+    SA[Super Admin] --> Admin
+    Admin --> UP[AdminUserPermissions]
+    SA --> USP[SuperAdminUserPermissions]
+    UP --> Create
+    UP --> ViewAll
+    UP --> View
+    USP --> Update
+    USP --> Delete
+
+    Admin --> User
+
+
+    User --> TP[TodoPermissions]
+    TP --> T_Create[Create]
+    TP --> T_ViewAll[ViewAll]
+    TP --> T_View[View]
+    TP --> T_Update[Update]
+    TP --> T_Delete[Delete]
+```
 
 ## Getting Started
 
@@ -77,7 +221,7 @@ Permission State:
 1. Clone the repository:
 
 ```sh
-git clone <repository-url>
+git clone git@github.com:mislam-dev/task-management-enterprise.git
 cd task-management-enterprise
 ```
 
@@ -92,10 +236,12 @@ pnpm install
 - Copy `.env.example` to `.env`
 - Update the database connection string and other required variables
 
+> N:B: There are several folder where .env.example is exist. You should update those
+
 4. Set up the database:
 
 ```sh
-pnpm -F @Task/database prisma:generate
+pnpm -F @todo/database prisma:generate
 pnpm -F @todo/database prisma:migrate
 ```
 
@@ -123,6 +269,11 @@ pnpm format
 pnpm check-types
 ```
 
+### Docker Support
+
+This project support docker. Run following command to start:
+`docker compose up`
+
 ## Architecture
 
 The application follows a clean architecture pattern with:
@@ -149,13 +300,11 @@ Hi! I'm a passionate software engineer dedicated to creating enterprise-level so
 
 I'm always open to discussing technology, software architecture, or potential collaborations. Feel free to reach out through any of these channels:
 
-- 📧 Email: mr.monirul.dev@gmail.com
-- 💼 LinkedIn: [Linkedin](https://www.linkedin.com/in/codemonkmi/)
-- 🐱 GitHub: [Github](https://github.com/CodeMonkMI)
-- 🌐 Portfolio: [Portfolio](https://codemonkmi.vercel.app/)
+- 📧 Email: mmislam027@gmail.com
+- 💼 LinkedIn: [https://www.linkedin.com/in/mislam-dev/](https://www.linkedin.com/in/mislam-dev/)
+- 🐱 GitHub: [https://github.com/mislam-dev](https://github.com/mislam-dev)
+- 🌐 Portfolio: [https://mislam-dev.vercel.app/](https://mislam-dev.vercel.app/)
 
 ### Let's Connect
 
 Whether you're interested in contributing to this project, have questions about the implementation, or just want to connect, I'd love to hear from you!
-
-_Note: Please replace the placeholder contact information with your actual contact details._
