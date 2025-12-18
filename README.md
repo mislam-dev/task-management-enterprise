@@ -1,16 +1,16 @@
-# Todo Enterprise
+# Task Management Enterprise
 
 A full-stack TypeScript monorepo application built with Turborepo, featuring a clean architecture pattern and domain-driven design.
 
 ## Project Overview
 
-Todo Enterprise is a robust task management system with user authentication, role-based access control, and a modern React frontend.
+Task Enterprise is a robust task management system with user authentication, role-based access control, and a modern React frontend.
 
 ### Key Features
 
 - User authentication and authorization
 - Role-based access control with permission management
-- Todo management with CRUD operations
+- Task management with CRUD operations
 - Modern React frontend with shadcn-ui
 - Clean architecture with domain-driven design
 - Type-safe development with TypeScript
@@ -78,7 +78,7 @@ Permission State:
 
 ```sh
 git clone <repository-url>
-cd todo-enterprise
+cd task-management-enterprise
 ```
 
 2. Install dependencies:
@@ -95,7 +95,7 @@ pnpm install
 4. Set up the database:
 
 ```sh
-pnpm -F @todo/database prisma:generate
+pnpm -F @Task/database prisma:generate
 pnpm -F @todo/database prisma:migrate
 ```
 
