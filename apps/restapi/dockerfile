@@ -1,0 +1,52 @@
+FROM node:20-alpine AS base
+RUN npm install --global corepack@latest turbo@latest
+RUN corepack enable pnpm
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Stage 1: Prune
+FROM base AS builder
+COPY . .
+RUN turbo prune @todo/restapi --docker
+
+# Stage 2: Install
+FROM base AS installer
+COPY --from=builder /app/out/json/ .
+COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+RUN pnpm install --frozen-lockfile
+
+# Stage 3: Build
+FROM installer AS builder-stage
+COPY --from=builder /app/out/full/ .
+COPY turbo.json turbo.json
+# Build everything the API depends on
+RUN turbo run build --filter=@todo/restapi...
+
+# Stage 4: Runner
+# ... (Stages 1 through 3 remain the same) ...
+
+# Stage 4: Runner
+FROM base AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+# 1. Copy pruned metadata and install production deps
+COPY --from=builder /app/out/json/ .
+COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts
+
+# 2. Copy build outputs
+COPY --from=builder-stage /app/apps/restapi/dist ./apps/restapi/dist
+COPY --from=builder-stage /app/apps/restapi/package.json ./apps/restapi/package.json
+COPY --from=builder-stage /app/packages ./packages
+
+# 3. CRITICAL: Re-generate Prisma Client
+# We need the schema file to generate the client. 
+# Adjust this path to wherever your schema.prisma lives (usually in packages/database)
+COPY --from=builder-stage /app/packages/database/prisma ./packages/database/prisma
+RUN npx prisma@6.8.2 generate --schema=./packages/database/prisma/schema.prisma
+
+# 4. Set Workdir and Run
+WORKDIR /app/apps/restapi
+EXPOSE 5000
+CMD ["node", "dist/index.js"]

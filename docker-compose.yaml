@@ -1,4 +1,13 @@
 services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/restapi/Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/todo
+      REDIS_URL: redis://redis:6379
   web:
     build:
       context: .
@@ -6,9 +15,9 @@ services:
     ports:
       - "3000:80"
     environment:
-      - VITE_API_URL=http://localhost:5000 # For browser-side calls
-    # depends_on:
-    #   - api
+      VITE_API_URL: http://localhost:5000 # For browser-side calls
+    depends_on:
+      - api
   postgres:
     image: postgres:15-alpine
     container_name: todo-postgres
