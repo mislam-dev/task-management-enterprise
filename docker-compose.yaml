@@ -1,4 +1,14 @@
 services:
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - "3000:80"
+    environment:
+      - VITE_API_URL=http://localhost:5000 # For browser-side calls
+    # depends_on:
+    #   - api
   postgres:
     image: postgres:15-alpine
     container_name: todo-postgres
